@@ -776,40 +776,37 @@
                     <h3 class="card-title"><span>📋</span> Informations générales</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="Department">Département *</label>
-                            <select id="Department" name="Department" required>
+                            <label for="Department">Département</label>
+                            <select id="Department" name="Department">
+                                <option value="">-- Sélectionner --</option>
                                 {% for dept in categorical_options.Department %}
                                 <option value="{{ dept }}">{{ dept }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="JobRole">Poste *</label>
-                            <select id="JobRole" name="JobRole" required>
+                            <label for="JobRole">Poste</label>
+                            <select id="JobRole" name="JobRole">
+                                <option value="">-- Sélectionner --</option>
                                 {% for role in categorical_options.JobRole %}
                                 <option value="{{ role }}">{{ role }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="JobLevel">Niveau hiérarchique (1-5) *</label>
-                            <input type="number" id="JobLevel" name="JobLevel" min="1" max="5" value="2" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="MaritalStatus">Statut marital</label>
-                            <select id="MaritalStatus" name="MaritalStatus">
-                                {% for status in categorical_options.MaritalStatus %}
-                                <option value="{{ status }}">{{ status }}</option>
-                                {% endfor %}
-                            </select>
+                            <label for="JobLevel">Niveau hiérarchique (1-5)</label>
+                            <input type="number" id="JobLevel" name="JobLevel" min="1" max="5" placeholder="1=Junior, 2=Confirmé, 3=Manager, 4=Directeur, 5=Exécutif">
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">1=Employé/Junior, 2=Confirmé/Senior, 3=Manager/Chef d'équipe, 4=Directeur/Senior Manager, 5=Exécutif/Direction générale</small>
                         </div>
                         <div class="form-group">
                             <label for="Education">Niveau d'éducation (1-5)</label>
-                            <input type="number" id="Education" name="Education" min="1" max="5" value="3">
+                            <input type="number" id="Education" name="Education" min="1" max="5" placeholder="1=<Bac, 2=Bac, 3=Licence, 4=Master, 5=Doctorat">
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">1=En dessous du Bac, 2=Bac, 3=Licence (Bac+3), 4=Master (Bac+5), 5=Doctorat</small>
                         </div>
                         <div class="form-group">
                             <label for="EducationField">Domaine d'études</label>
                             <select id="EducationField" name="EducationField">
+                                <option value="">-- Sélectionner --</option>
                                 {% for field in categorical_options.EducationField %}
                                 <option value="{{ field }}">{{ field }}</option>
                                 {% endfor %}
@@ -823,20 +820,20 @@
                     <h3 class="card-title"><span>💰</span> Rémunération et carrière</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="MonthlyIncome">Salaire mensuel (€) *</label>
-                            <input type="number" id="MonthlyIncome" name="MonthlyIncome" min="0" value="5000" required>
+                            <label for="MonthlyIncome">Salaire mensuel (€)</label>
+                            <input type="number" id="MonthlyIncome" name="MonthlyIncome" min="0" placeholder="Ex: 5000">
                         </div>
                         <div class="form-group">
                             <label for="PercentSalaryHike">Dernière augmentation (%)</label>
-                            <input type="number" id="PercentSalaryHike" name="PercentSalaryHike" min="0" max="100" value="15">
+                            <input type="number" id="PercentSalaryHike" name="PercentSalaryHike" min="0" max="100" placeholder="Ex: 15">
                         </div>
                         <div class="form-group">
                             <label for="StockOptionLevel">Niveau stock options (0-3)</label>
-                            <input type="number" id="StockOptionLevel" name="StockOptionLevel" min="0" max="3" value="1">
+                            <input type="number" id="StockOptionLevel" name="StockOptionLevel" min="0" max="3" placeholder="0, 1, 2 ou 3">
                         </div>
                         <div class="form-group">
                             <label for="PerformanceRating">Note de performance (1-4)</label>
-                            <input type="number" id="PerformanceRating" name="PerformanceRating" min="1" max="4" value="3">
+                            <input type="number" id="PerformanceRating" name="PerformanceRating" min="1" max="4" placeholder="1 à 4">
                         </div>
                     </div>
                 </div>
@@ -846,28 +843,28 @@
                     <h3 class="card-title"><span>📅</span> Expérience</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="TotalWorkingYears">Années d'expérience totales *</label>
-                            <input type="number" id="TotalWorkingYears" name="TotalWorkingYears" min="0" value="8" required>
+                            <label for="TotalWorkingYears">Années d'expérience totales</label>
+                            <input type="number" id="TotalWorkingYears" name="TotalWorkingYears" min="0" placeholder="Ex: 8">
                         </div>
                         <div class="form-group">
-                            <label for="YearsAtCompany">Années dans l'entreprise *</label>
-                            <input type="number" id="YearsAtCompany" name="YearsAtCompany" min="0" value="5" required>
+                            <label for="YearsAtCompany">Années dans l'entreprise</label>
+                            <input type="number" id="YearsAtCompany" name="YearsAtCompany" min="0" placeholder="Ex: 5">
                         </div>
                         <div class="form-group">
                             <label for="YearsInCurrentRole">Années dans le poste actuel</label>
-                            <input type="number" id="YearsInCurrentRole" name="YearsInCurrentRole" min="0" value="3">
+                            <input type="number" id="YearsInCurrentRole" name="YearsInCurrentRole" min="0" placeholder="Ex: 3">
                         </div>
                         <div class="form-group">
                             <label for="YearsSinceLastPromotion">Années depuis dernière promotion</label>
-                            <input type="number" id="YearsSinceLastPromotion" name="YearsSinceLastPromotion" min="0" value="1">
+                            <input type="number" id="YearsSinceLastPromotion" name="YearsSinceLastPromotion" min="0" placeholder="Ex: 1">
                         </div>
                         <div class="form-group">
                             <label for="YearsWithCurrManager">Années avec le manager actuel</label>
-                            <input type="number" id="YearsWithCurrManager" name="YearsWithCurrManager" min="0" value="3">
+                            <input type="number" id="YearsWithCurrManager" name="YearsWithCurrManager" min="0" placeholder="Ex: 3">
                         </div>
                         <div class="form-group">
                             <label for="NumCompaniesWorked">Entreprises précédentes</label>
-                            <input type="number" id="NumCompaniesWorked" name="NumCompaniesWorked" min="0" value="2">
+                            <input type="number" id="NumCompaniesWorked" name="NumCompaniesWorked" min="0" placeholder="Ex: 2">
                         </div>
                     </div>
                 </div>
@@ -878,23 +875,23 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="JobSatisfaction">Satisfaction au travail</label>
-                            <input type="range" id="JobSatisfaction" name="JobSatisfaction" min="1" max="4" value="3" oninput="updateRangeValue(this)">
-                            <div class="range-value" id="JobSatisfaction-value">3 / 4</div>
+                            <input type="range" id="JobSatisfaction" name="JobSatisfaction" min="1" max="4" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="JobSatisfaction-value">-- Non renseigné --</div>
                         </div>
                         <div class="form-group">
                             <label for="EnvironmentSatisfaction">Satisfaction environnement</label>
-                            <input type="range" id="EnvironmentSatisfaction" name="EnvironmentSatisfaction" min="1" max="4" value="3" oninput="updateRangeValue(this)">
-                            <div class="range-value" id="EnvironmentSatisfaction-value">3 / 4</div>
+                            <input type="range" id="EnvironmentSatisfaction" name="EnvironmentSatisfaction" min="1" max="4" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="EnvironmentSatisfaction-value">-- Non renseigné --</div>
                         </div>
                         <div class="form-group">
                             <label for="WorkLifeBalance">Équilibre vie pro/perso</label>
-                            <input type="range" id="WorkLifeBalance" name="WorkLifeBalance" min="1" max="4" value="3" oninput="updateRangeValue(this)">
-                            <div class="range-value" id="WorkLifeBalance-value">3 / 4</div>
+                            <input type="range" id="WorkLifeBalance" name="WorkLifeBalance" min="1" max="4" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="WorkLifeBalance-value">-- Non renseigné --</div>
                         </div>
                         <div class="form-group">
                             <label for="JobInvolvement">Implication au travail</label>
-                            <input type="range" id="JobInvolvement" name="JobInvolvement" min="1" max="4" value="3" oninput="updateRangeValue(this)">
-                            <div class="range-value" id="JobInvolvement-value">3 / 4</div>
+                            <input type="range" id="JobInvolvement" name="JobInvolvement" min="1" max="4" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="JobInvolvement-value">-- Non renseigné --</div>
                         </div>
                     </div>
                 </div>
@@ -906,6 +903,7 @@
                         <div class="form-group">
                             <label for="BusinessTravel">Fréquence de déplacement</label>
                             <select id="BusinessTravel" name="BusinessTravel">
+                                <option value="">-- Sélectionner --</option>
                                 {% for travel in categorical_options.BusinessTravel %}
                                 <option value="{{ travel }}">{{ travel }}</option>
                                 {% endfor %}
@@ -913,19 +911,19 @@
                         </div>
                         <div class="form-group">
                             <label for="DistanceFromHome">Distance domicile-travail (km)</label>
-                            <input type="number" id="DistanceFromHome" name="DistanceFromHome" min="0" value="10">
+                            <input type="number" id="DistanceFromHome" name="DistanceFromHome" min="0" placeholder="Ex: 10">
                         </div>
                         <div class="form-group">
                             <label for="TrainingTimesLastYear">Formations suivies (année)</label>
-                            <input type="number" id="TrainingTimesLastYear" name="TrainingTimesLastYear" min="0" value="3">
+                            <input type="number" id="TrainingTimesLastYear" name="TrainingTimesLastYear" min="0" placeholder="Ex: 3">
                         </div>
                         <div class="form-group">
                             <label for="Arrive_mean">Heure d'arrivée moyenne</label>
-                            <input type="number" id="Arrive_mean" name="Arrive_mean" min="5" max="12" step="0.5" value="9">
+                            <input type="number" id="Arrive_mean" name="Arrive_mean" min="5" max="12" step="0.5" placeholder="Ex: 9.0">
                         </div>
                         <div class="form-group">
                             <label for="Worktime_mean">Heures de travail/jour</label>
-                            <input type="number" id="Worktime_mean" name="Worktime_mean" min="4" max="16" step="0.5" value="8.5">
+                            <input type="number" id="Worktime_mean" name="Worktime_mean" min="4" max="16" step="0.5" placeholder="Ex: 8.5">
                         </div>
                     </div>
                 </div>
@@ -1025,11 +1023,17 @@
         }
 
         function updateRangeValue(input) {
-            document.getElementById(`${input.id}-value`).textContent = `${input.value} / 4`;
+            const valueDisplay = document.getElementById(`${input.id}-value`);
+            if (input.value) {
+                valueDisplay.textContent = `${input.value} / 4`;
+            } else {
+                valueDisplay.textContent = '-- Non renseigné --';
+            }
         }
 
-        // Initialize range values
+        // Initialize range values - set them empty initially
         document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.value = '';  // Clear initial value
             updateRangeValue(input);
         });
 
@@ -1055,9 +1059,16 @@
             e.preventDefault();
             
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            const data = {};
             
-            // Convert numeric fields
+            // Convert form data, only including non-empty values
+            for (let [key, value] of formData.entries()) {
+                if (value !== '' && value !== null) {
+                    data[key] = value;
+                }
+            }
+            
+            // Convert numeric fields that are present
             const numericFields = [
                 'JobLevel', 'Education', 'MonthlyIncome', 'PercentSalaryHike', 
                 'StockOptionLevel', 'PerformanceRating', 'TotalWorkingYears', 
@@ -1068,7 +1079,7 @@
             ];
             
             numericFields.forEach(field => {
-                if (data[field]) {
+                if (data[field] !== undefined && data[field] !== '') {
                     data[field] = parseFloat(data[field]);
                 }
             });
@@ -1098,6 +1109,16 @@
             const container = document.getElementById('single-result');
             const isDanger = result.prediction === 'DÉPART PROBABLE';
             
+            // Confidence indicator styling
+            let confidenceClass = 'faible';
+            if (result.confidence_level === 'Haute confiance') {
+                confidenceClass = 'faible';  // Use green
+            } else if (result.confidence_level === 'Confiance moyenne') {
+                confidenceClass = 'modere';  // Use blue
+            } else {
+                confidenceClass = 'eleve';  // Use warning color
+            }
+            
             let riskFactorsHTML = '';
             if (result.risk_factors && result.risk_factors.length > 0) {
                 riskFactorsHTML = `
@@ -1116,20 +1137,19 @@
                 `;
             }
 
-            let recommendationsHTML = '';
-            if (result.recommendations && result.recommendations.length > 0) {
-                recommendationsHTML = `
-                    <div class="recommendations">
-                        <h4 class="recommendations-title">💡 Recommandations pour améliorer la rétention</h4>
-                        ${result.recommendations.map(rec => `
-                            <div class="recommendation-item">
-                                <span class="recommendation-icon">✓</span>
-                                <span>${rec}</span>
-                            </div>
-                        `).join('')}
+            // Confidence indicator
+            const confidenceHTML = `
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 10px; border-left: 4px solid var(--accent-primary);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.25rem;">📊</span>
+                        <span style="font-weight: 600;">Niveau de confiance : <span class="risk-badge ${confidenceClass}">${result.confidence_level}</span></span>
                     </div>
-                `;
-            }
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">${result.confidence_message}</p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                        Champs renseignés : ${result.total_fields - result.missing_fields_count} / ${result.total_fields}
+                    </p>
+                </div>
+            `;
 
             container.innerHTML = `
                 <div class="result-card">
@@ -1150,8 +1170,8 @@
                         </div>
                     </div>
                     
+                    ${confidenceHTML}
                     ${riskFactorsHTML}
-                    ${recommendationsHTML}
                 </div>
             `;
             
@@ -1487,7 +1507,7 @@
                 'EmployeeID', 'BusinessTravel', 'Department', 'DistanceFromHome',
                 'Education', 'EducationField', 'EnvironmentSatisfaction', 
                 'JobInvolvement', 'JobLevel', 'JobRole', 'JobSatisfaction',
-                'MaritalStatus', 'MonthlyIncome', 'NumCompaniesWorked',
+                'MonthlyIncome', 'NumCompaniesWorked',
                 'PercentSalaryHike', 'PerformanceRating', 'StockOptionLevel',
                 'TotalWorkingYears', 'TrainingTimesLastYear', 'WorkLifeBalance',
                 'YearsAtCompany', 'YearsInCurrentRole', 'YearsSinceLastPromotion',
@@ -1497,7 +1517,7 @@
             const sampleRow = [
                 '1', 'Travel_Rarely', 'Research & Development', '10',
                 '3', 'Life Sciences', '3', '3', '2', 'Research Scientist', '3',
-                'Married', '5000', '2', '15', '3', '1', '8', '3', '3',
+                '5000', '2', '15', '3', '1', '8', '3', '3',
                 '5', '3', '1', '3', '9.0', '8.5'
             ];
             

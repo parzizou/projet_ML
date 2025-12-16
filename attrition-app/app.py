@@ -49,10 +49,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 model = None
 preprocessor = None
 metadata = None
+imputation_values = None  # Valeurs pour l'imputation (médianes/modes)
 
 def load_models():
     """Charge le modèle, le preprocessor et les métadonnées."""
-    global model, preprocessor, metadata
+    global model, preprocessor, metadata, imputation_values
     
     try:
         if os.path.exists(MODEL_PATH):
@@ -70,6 +71,14 @@ def load_models():
         if os.path.exists(METADATA_PATH):
             metadata = joblib.load(METADATA_PATH)
             print(f"✅ Métadonnées chargées: {METADATA_PATH}")
+            
+            # Charger les valeurs d'imputation si disponibles dans les métadonnées
+            if isinstance(metadata, dict) and 'imputation_values' in metadata:
+                imputation_values = metadata['imputation_values']
+                print(f"✅ Valeurs d'imputation chargées")
+            else:
+                print(f"⚠️ Pas de valeurs d'imputation dans les métadonnées, utilisation de valeurs par défaut")
+                imputation_values = None
         else:
             print(f"⚠️ Métadonnées non trouvées: {METADATA_PATH}")
             
@@ -87,36 +96,35 @@ async def startup_event():
 
 class EmployeeData(BaseModel):
     """Schéma pour les données d'un employé."""
-    # Données générales
-    BusinessTravel: str = Field(..., description="Fréquence de voyage (Travel_Rarely, Travel_Frequently, Non-Travel)")
-    Department: str = Field(..., description="Département (Sales, Research & Development, Human Resources)")
-    DistanceFromHome: int = Field(..., ge=0, description="Distance domicile-travail (km)")
-    Education: int = Field(..., ge=1, le=5, description="Niveau d'éducation (1-5)")
-    EducationField: str = Field(..., description="Domaine d'études")
-    JobInvolvement: int = Field(..., ge=1, le=4, description="Implication au travail (1-4)")
-    JobLevel: int = Field(..., ge=1, le=5, description="Niveau hiérarchique (1-5)")
-    JobRole: str = Field(..., description="Rôle/Poste")
-    JobSatisfaction: int = Field(..., ge=1, le=4, description="Satisfaction au travail (1-4)")
-    MaritalStatus: str = Field(..., description="Statut marital (Single, Married, Divorced)")
-    MonthlyIncome: float = Field(..., ge=0, description="Salaire mensuel")
-    NumCompaniesWorked: int = Field(..., ge=0, description="Nombre d'entreprises précédentes")
-    PercentSalaryHike: float = Field(..., ge=0, description="Pourcentage d'augmentation")
-    PerformanceRating: int = Field(..., ge=1, le=4, description="Note de performance (1-4)")
-    StockOptionLevel: int = Field(..., ge=0, le=3, description="Niveau de stock options (0-3)")
-    TotalWorkingYears: int = Field(..., ge=0, description="Années d'expérience totales")
-    TrainingTimesLastYear: int = Field(..., ge=0, description="Formations suivies l'an dernier")
-    WorkLifeBalance: int = Field(..., ge=1, le=4, description="Équilibre vie pro/perso (1-4)")
-    YearsAtCompany: int = Field(..., ge=0, description="Années dans l'entreprise")
-    YearsInCurrentRole: int = Field(..., ge=0, description="Années dans le poste actuel")
-    YearsSinceLastPromotion: int = Field(..., ge=0, description="Années depuis dernière promotion")
-    YearsWithCurrManager: int = Field(..., ge=0, description="Années avec le manager actuel")
+    # Données générales - Tous les champs sont optionnels
+    BusinessTravel: Optional[str] = Field(None, description="Fréquence de voyage (Travel_Rarely, Travel_Frequently, Non-Travel)")
+    Department: Optional[str] = Field(None, description="Département (Sales, Research & Development, Human Resources)")
+    DistanceFromHome: Optional[int] = Field(None, ge=0, description="Distance domicile-travail (km)")
+    Education: Optional[int] = Field(None, ge=1, le=5, description="Niveau d'éducation (1-5)")
+    EducationField: Optional[str] = Field(None, description="Domaine d'études")
+    JobInvolvement: Optional[int] = Field(None, ge=1, le=4, description="Implication au travail (1-4)")
+    JobLevel: Optional[int] = Field(None, ge=1, le=5, description="Niveau hiérarchique (1-5)")
+    JobRole: Optional[str] = Field(None, description="Rôle/Poste")
+    JobSatisfaction: Optional[int] = Field(None, ge=1, le=4, description="Satisfaction au travail (1-4)")
+    MonthlyIncome: Optional[float] = Field(None, ge=0, description="Salaire mensuel")
+    NumCompaniesWorked: Optional[int] = Field(None, ge=0, description="Nombre d'entreprises précédentes")
+    PercentSalaryHike: Optional[float] = Field(None, ge=0, description="Pourcentage d'augmentation")
+    PerformanceRating: Optional[int] = Field(None, ge=1, le=4, description="Note de performance (1-4)")
+    StockOptionLevel: Optional[int] = Field(None, ge=0, le=3, description="Niveau de stock options (0-3)")
+    TotalWorkingYears: Optional[int] = Field(None, ge=0, description="Années d'expérience totales")
+    TrainingTimesLastYear: Optional[int] = Field(None, ge=0, description="Formations suivies l'an dernier")
+    WorkLifeBalance: Optional[int] = Field(None, ge=1, le=4, description="Équilibre vie pro/perso (1-4)")
+    YearsAtCompany: Optional[int] = Field(None, ge=0, description="Années dans l'entreprise")
+    YearsInCurrentRole: Optional[int] = Field(None, ge=0, description="Années dans le poste actuel")
+    YearsSinceLastPromotion: Optional[int] = Field(None, ge=0, description="Années depuis dernière promotion")
+    YearsWithCurrManager: Optional[int] = Field(None, ge=0, description="Années avec le manager actuel")
     
     # Données de sondage employé
-    EnvironmentSatisfaction: int = Field(..., ge=1, le=4, description="Satisfaction environnement (1-4)")
+    EnvironmentSatisfaction: Optional[int] = Field(None, ge=1, le=4, description="Satisfaction environnement (1-4)")
     
     # Données temporelles (optionnelles - moyennes calculées)
-    Arrive_mean: Optional[float] = Field(9.0, description="Heure d'arrivée moyenne (ex: 9.5 = 9h30)")
-    Worktime_mean: Optional[float] = Field(8.5, description="Heures de travail moyennes par jour")
+    Arrive_mean: Optional[float] = Field(None, description="Heure d'arrivée moyenne (ex: 9.5 = 9h30)")
+    Worktime_mean: Optional[float] = Field(None, description="Heures de travail moyennes par jour")
 
 class PredictionResponse(BaseModel):
     """Schéma pour la réponse de prédiction."""
@@ -124,8 +132,11 @@ class PredictionResponse(BaseModel):
     prediction: str
     probability: float
     risk_level: str
+    confidence_level: str
+    confidence_message: str
+    missing_fields_count: int
+    total_fields: int
     risk_factors: List[Dict[str, Any]]
-    recommendations: List[str]
 
 # ============================================================================
 # CONSTANTES ET VALEURS PAR DÉFAUT
@@ -135,7 +146,7 @@ class PredictionResponse(BaseModel):
 EXPECTED_COLUMNS = [
     'BusinessTravel', 'Department', 'DistanceFromHome', 'Education',
     'EducationField', 'EnvironmentSatisfaction', 'JobInvolvement',
-    'JobLevel', 'JobRole', 'JobSatisfaction', 'MaritalStatus',
+    'JobLevel', 'JobRole', 'JobSatisfaction',
     'MonthlyIncome', 'NumCompaniesWorked', 'PercentSalaryHike',
     'PerformanceRating', 'StockOptionLevel', 'TotalWorkingYears',
     'TrainingTimesLastYear', 'WorkLifeBalance', 'YearsAtCompany',
@@ -146,19 +157,48 @@ EXPECTED_COLUMNS = [
 # Colonnes à supprimer (comme dans le notebook)
 COLUMNS_TO_DROP = [
     'EmployeeID', 'Gender', 'Over18', 'StandardHours', 
-    'EmployeeCount', 'Departure_mean', 'Age', 'Attrition'
+    'EmployeeCount', 'Departure_mean', 'Age', 'Attrition', 'MaritalStatus'
 ]
 
-# Valeurs par défaut pour les colonnes manquantes
-DEFAULT_VALUES = {
-    'Arrive_mean': 9.0,
-    'Worktime_mean': 8.5,
+# Valeurs par défaut de secours pour l'imputation (si pas dans metadata)
+FALLBACK_IMPUTATION_VALUES = {
+    # Valeurs numériques - médianes approximatives
+    'DistanceFromHome': 7,
+    'Education': 3,
     'EnvironmentSatisfaction': 3,
     'JobInvolvement': 3,
+    'JobLevel': 2,
     'JobSatisfaction': 3,
+    'MonthlyIncome': 4900,
+    'NumCompaniesWorked': 1,
+    'PercentSalaryHike': 15,
     'PerformanceRating': 3,
-    'WorkLifeBalance': 3
+    'StockOptionLevel': 1,
+    'TotalWorkingYears': 10,
+    'TrainingTimesLastYear': 2,
+    'WorkLifeBalance': 3,
+    'YearsAtCompany': 5,
+    'YearsInCurrentRole': 2,
+    'YearsSinceLastPromotion': 1,
+    'YearsWithCurrManager': 2,
+    'Arrive_mean': 9.0,
+    'Worktime_mean': 8.5,
+    
+    # Valeurs catégorielles - modes
+    'BusinessTravel': 'Travel_Rarely',
+    'Department': 'Research & Development',
+    'EducationField': 'Life Sciences',
+    'JobRole': 'Sales Executive'
 }
+
+def get_imputation_value(column: str) -> Any:
+    """Récupère la valeur d'imputation pour une colonne."""
+    if imputation_values and column in imputation_values:
+        return imputation_values[column]
+    elif column in FALLBACK_IMPUTATION_VALUES:
+        return FALLBACK_IMPUTATION_VALUES[column]
+    else:
+        return 0  # Dernière valeur de secours
 
 # Options pour les champs catégoriels
 CATEGORICAL_OPTIONS = {
@@ -169,8 +209,7 @@ CATEGORICAL_OPTIONS = {
         'Healthcare Representative', 'Human Resources', 'Laboratory Technician',
         'Manager', 'Manufacturing Director', 'Research Director',
         'Research Scientist', 'Sales Executive', 'Sales Representative'
-    ],
-    'MaritalStatus': ['Divorced', 'Married', 'Single']
+    ]
 }
 
 # Facteurs de risque et recommandations associées
@@ -271,11 +310,16 @@ RISK_FACTORS_CONFIG = {
 # FONCTIONS UTILITAIRES
 # ============================================================================
 
-def preprocess_employee_data(data: dict) -> pd.DataFrame:
+def preprocess_employee_data(data: dict) -> tuple:
     """
     Prétraite les données d'un employé pour la prédiction.
     Applique les mêmes transformations que dans le notebook.
+    Retourne un tuple (DataFrame, missing_count, total_count)
     """
+    # Compter les valeurs manquantes
+    total_fields = len(EXPECTED_COLUMNS)
+    missing_count = sum(1 for col in EXPECTED_COLUMNS if col not in data or data[col] is None or data[col] == '')
+    
     # Créer DataFrame
     df = pd.DataFrame([data])
     
@@ -284,24 +328,21 @@ def preprocess_employee_data(data: dict) -> pd.DataFrame:
         if col in df.columns:
             df = df.drop(columns=[col])
     
-    # Ajouter les valeurs par défaut pour les colonnes manquantes
-    for col, default_val in DEFAULT_VALUES.items():
-        if col not in df.columns:
-            df[col] = default_val
+    # Imputer les valeurs manquantes pour toutes les colonnes attendues
+    for col in EXPECTED_COLUMNS:
+        if col not in df.columns or pd.isna(df[col].iloc[0]) or df[col].iloc[0] == '' or df[col].iloc[0] is None:
+            imputation_value = get_imputation_value(col)
+            df[col] = imputation_value
     
     # S'assurer que toutes les colonnes attendues sont présentes
     for col in EXPECTED_COLUMNS:
         if col not in df.columns:
-            # Valeur par défaut selon le type
-            if col in CATEGORICAL_OPTIONS:
-                df[col] = CATEGORICAL_OPTIONS[col][0]
-            else:
-                df[col] = 0
+            df[col] = get_imputation_value(col)
     
     # Réordonner les colonnes
     df = df[[col for col in EXPECTED_COLUMNS if col in df.columns]]
     
-    return df
+    return df, missing_count, total_fields
 
 def analyze_risk_factors(data: dict) -> tuple:
     """
@@ -353,6 +394,23 @@ def get_risk_level(probability: float) -> str:
     else:
         return 'FAIBLE'
 
+def get_confidence_level(missing_count: int, total_count: int) -> tuple:
+    """
+    Détermine le niveau de confiance basé sur le pourcentage de valeurs manquantes.
+    Retourne (niveau, message)
+    """
+    if total_count == 0:
+        return ('Inconnu', 'Impossible de calculer la confiance')
+    
+    missing_percentage = (missing_count / total_count) * 100
+    
+    if missing_percentage <= 10:
+        return ('Haute confiance', 'La prédiction est très fiable (peu de valeurs manquantes)')
+    elif missing_percentage <= 30:
+        return ('Confiance moyenne', 'La prédiction est fiable mais quelques valeurs ont été estimées')
+    else:
+        return ('Faible confiance', f'Attention : {missing_percentage:.0f}% des champs sont manquants. La prédiction peut être moins précise.')
+
 def predict_single(data: dict) -> dict:
     """Effectue une prédiction pour un seul employé."""
     if model is None or preprocessor is None:
@@ -361,13 +419,19 @@ def predict_single(data: dict) -> dict:
             'prediction': 'ERREUR',
             'probability': 0.0,
             'risk_level': 'INCONNU',
-            'risk_factors': [],
-            'recommendations': ['Chargez d\'abord le modèle ML']
+            'confidence_level': 'Inconnu',
+            'confidence_message': 'Modèle non chargé',
+            'missing_fields_count': 0,
+            'total_fields': 0,
+            'risk_factors': []
         }
     
     try:
-        # Prétraiter les données
-        df = preprocess_employee_data(data)
+        # Prétraiter les données et compter les valeurs manquantes
+        df, missing_count, total_count = preprocess_employee_data(data)
+        
+        # Calculer le niveau de confiance
+        confidence_level, confidence_message = get_confidence_level(missing_count, total_count)
         
         # Transformer avec le preprocessor
         X_processed = preprocessor.transform(df)
@@ -382,22 +446,17 @@ def predict_single(data: dict) -> dict:
             proba = float(prediction)
         
         # Analyser les facteurs de risque
-        risk_factors, recommendations = analyze_risk_factors(data)
-        
-        # Ajouter des recommandations générales si risque élevé
-        if proba >= 0.5 and not recommendations:
-            recommendations = [
-                'Organiser un entretien de feedback approfondi',
-                'Évaluer les opportunités d\'évolution interne',
-                'Renforcer l\'engagement via des projets stimulants'
-            ]
+        risk_factors, _ = analyze_risk_factors(data)
         
         return {
             'prediction': 'DÉPART PROBABLE' if prediction == 1 else 'RESTE PROBABLE',
             'probability': round(float(proba) * 100, 1),
             'risk_level': get_risk_level(proba),
-            'risk_factors': risk_factors,
-            'recommendations': recommendations if prediction == 1 else []
+            'confidence_level': confidence_level,
+            'confidence_message': confidence_message,
+            'missing_fields_count': missing_count,
+            'total_fields': total_count,
+            'risk_factors': risk_factors
         }
         
     except Exception as e:
@@ -406,8 +465,11 @@ def predict_single(data: dict) -> dict:
             'prediction': 'ERREUR',
             'probability': 0.0,
             'risk_level': 'ERREUR',
-            'risk_factors': [],
-            'recommendations': []
+            'confidence_level': 'Inconnu',
+            'confidence_message': 'Erreur lors du calcul',
+            'missing_fields_count': 0,
+            'total_fields': 0,
+            'risk_factors': []
         }
 
 # ============================================================================
@@ -518,7 +580,6 @@ async def get_sample_data():
         "JobLevel": 2,
         "JobRole": "Research Scientist",
         "JobSatisfaction": 3,
-        "MaritalStatus": "Married",
         "MonthlyIncome": 5000,
         "NumCompaniesWorked": 2,
         "PercentSalaryHike": 15,
