@@ -1480,14 +1480,22 @@
 
         function downloadTemplate() {
             const headers = [
-                'BusinessTravel', 'Department', 'DistanceFromHome', 'Education', 'EducationField', 'JobLevel', 'JobRole', 'MonthlyIncome', 'NumCompaniesWorked', 'PercentSalaryHike', 'StockOptionLevel', 'TotalWorkingYears', 'TrainingTimesLastYear', 'YearsAtCompany', 'YearsSinceLastPromotion', 'YearsWithCurrManager', 'EnvironmentSatisfaction', 'JobSatisfaction', 'WorkLifeBalance', 'JobInvolvement', 'PerformanceRating', 'Arrive_mean', 'Worktime_mean', 'Attrition', 'Predicted_Attrition', 'Predicted_Probability'
+                'BusinessTravel', 'Department', 'DistanceFromHome', 'Education', 'EducationField', 'JobLevel', 'JobRole', 'MonthlyIncome', 'NumCompaniesWorked', 'PercentSalaryHike', 'StockOptionLevel', 'TotalWorkingYears', 'TrainingTimesLastYear', 'YearsAtCompany', 'YearsSinceLastPromotion', 'YearsWithCurrManager', 'EnvironmentSatisfaction', 'JobSatisfaction', 'WorkLifeBalance', 'JobInvolvement', 'PerformanceRating', 'Arrive_mean', 'Worktime_mean'
             ];
 
             const sampleRow = [
-                'Travel_Rarely', 'Research & Development', '10', '3', 'Life Sciences', '2', 'Research Scientist', '5000', '2', '15', '1', '8', '3', '5', '1', '3', '3', '3', '3', '3', '3', '9.0', '8.5', 'No', '', ''
+                'Travel_Rarely', 'Research & Development', '10', '3', 'Life Sciences', '2', 'Research Scientist', '5000', '2', '15', '1', '8', '3', '5', '1', '3', '3', '3', '3', '3', '3', '9.0', '8.5'
             ];
 
-            const csvContent = headers.join(',') + '\n' + sampleRow.join(',');
+            const sampleRow2 = [
+                'Non-Travel', 'Sales', '5', '4', 'Marketing', '3', 'Sales Executive', '7000', '1', '20', '2', '10', '2', '7', '0', '5', '4', '4', '4', '4', '8.5', '9.0'
+            ];
+
+            const sampleRow3 = [
+                'Travel_Frequently', 'Human Resources', '20', '2', 'Human Resources', '1', 'HR Specialist', '4000', '3', '10', '0', '5', '4', '3', '2', '2', '2', '2', '2', '2', '10.0', '7.5'
+            ];
+
+            const csvContent = headers.join(',') + '\n' + sampleRow.join(',') + '\n' + sampleRow2.join(',') + '\n' + sampleRow3.join(',');
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
 
