@@ -1024,17 +1024,18 @@
 
         function updateRangeValue(input) {
             const valueDisplay = document.getElementById(`${input.id}-value`);
-            if (input.value) {
-                valueDisplay.textContent = `${input.value} / 4`;
-            } else {
-                valueDisplay.textContent = '-- Non renseigné --';
-            }
+            // Mark as user-set when the user interacts with it
+            input.dataset.userSet = 'true';
+            valueDisplay.textContent = `${input.value} / 4`;
         }
 
-        // Initialize range values - set them empty initially
+        // Initialize range values - show as not set initially
         document.querySelectorAll('input[type="range"]').forEach(input => {
-            input.value = '';  // Clear initial value
-            updateRangeValue(input);
+            const valueDisplay = document.getElementById(`${input.id}-value`);
+            // Don't mark as user-set on initialization
+            if (!input.dataset.userSet) {
+                valueDisplay.textContent = '-- Non renseigné --';
+            }
         });
 
         // ============================================================
@@ -1064,6 +1065,11 @@
             // Convert form data, only including non-empty values
             for (let [key, value] of formData.entries()) {
                 if (value !== '' && value !== null) {
+                    // For range inputs, only include if user has set them
+                    const input = document.getElementById(key);
+                    if (input && input.type === 'range' && !input.dataset.userSet) {
+                        continue;  // Skip this range input
+                    }
                     data[key] = value;
                 }
             }

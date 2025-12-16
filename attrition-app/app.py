@@ -162,22 +162,22 @@ COLUMNS_TO_DROP = [
 
 # Valeurs par défaut de secours pour l'imputation (si pas dans metadata)
 FALLBACK_IMPUTATION_VALUES = {
-    # Valeurs numériques - médianes approximatives
+    # Valeurs numériques - médianes calculées depuis les données d'entraînement
     'DistanceFromHome': 7,
     'Education': 3,
     'EnvironmentSatisfaction': 3,
     'JobInvolvement': 3,
     'JobLevel': 2,
     'JobSatisfaction': 3,
-    'MonthlyIncome': 4900,
-    'NumCompaniesWorked': 1,
+    'MonthlyIncome': 49190,
+    'NumCompaniesWorked': 2,
     'PercentSalaryHike': 15,
     'PerformanceRating': 3,
     'StockOptionLevel': 1,
     'TotalWorkingYears': 10,
-    'TrainingTimesLastYear': 2,
+    'TrainingTimesLastYear': 3,
     'WorkLifeBalance': 3,
-    'YearsAtCompany': 5,
+    'YearsAtCompany': 7,
     'YearsInCurrentRole': 2,
     'YearsSinceLastPromotion': 1,
     'YearsWithCurrManager': 2,
@@ -353,7 +353,7 @@ def analyze_risk_factors(data: dict) -> tuple:
     recommendations = set()
     
     for field, config in RISK_FACTORS_CONFIG.items():
-        if field not in data:
+        if field not in data or data[field] is None:
             continue
             
         value = data[field]
@@ -361,16 +361,20 @@ def analyze_risk_factors(data: dict) -> tuple:
         operator = config['operator']
         
         is_risk = False
-        if operator == '<=' and value <= threshold:
-            is_risk = True
-        elif operator == '<' and value < threshold:
-            is_risk = True
-        elif operator == '>' and value > threshold:
-            is_risk = True
-        elif operator == '>=' and value >= threshold:
-            is_risk = True
-        elif operator == '==' and value == threshold:
-            is_risk = True
+        try:
+            if operator == '<=' and value <= threshold:
+                is_risk = True
+            elif operator == '<' and value < threshold:
+                is_risk = True
+            elif operator == '>' and value > threshold:
+                is_risk = True
+            elif operator == '>=' and value >= threshold:
+                is_risk = True
+            elif operator == '==' and value == threshold:
+                is_risk = True
+        except (TypeError, ValueError):
+            # Skip if comparison fails (e.g., comparing None)
+            continue
             
         if is_risk:
             risk_factors.append({
