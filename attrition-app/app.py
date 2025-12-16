@@ -360,21 +360,21 @@ def analyze_risk_factors(data: dict) -> tuple:
         threshold = config['threshold']
         operator = config['operator']
         
-        is_risk = False
-        try:
-            if operator == '<=' and value <= threshold:
-                is_risk = True
-            elif operator == '<' and value < threshold:
-                is_risk = True
-            elif operator == '>' and value > threshold:
-                is_risk = True
-            elif operator == '>=' and value >= threshold:
-                is_risk = True
-            elif operator == '==' and value == threshold:
-                is_risk = True
-        except (TypeError, ValueError):
-            # Skip if comparison fails (e.g., comparing None)
+        # Skip if value is not comparable (not a number/string)
+        if not isinstance(value, (int, float, str)):
             continue
+        
+        is_risk = False
+        if operator == '<=' and value <= threshold:
+            is_risk = True
+        elif operator == '<' and value < threshold:
+            is_risk = True
+        elif operator == '>' and value > threshold:
+            is_risk = True
+        elif operator == '>=' and value >= threshold:
+            is_risk = True
+        elif operator == '==' and value == threshold:
+            is_risk = True
             
         if is_risk:
             risk_factors.append({
