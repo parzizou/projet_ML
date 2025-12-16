@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Prédiction Attrition RH</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #2a2a3a;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        .status-badge.success .status-dot { background: var(--accent-success); }
+        .status-badge.warning .status-dot { background: var(--accent-warning); }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+
+        .tab-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title span {
+            font-size: 1.5rem;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input, select {
+            padding: 0.875rem 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        input::placeholder {
+            color: var(--text-muted);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        /* Range Input */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg-dark);
+            border: none;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            border: 2px solid var(--bg-card);
+        }
+
+        .range-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.25rem;
+            color: var(--accent-primary);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-dark);
+        }
+
+        .file-upload:hover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-upload.drag-over {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-hint {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .result-prediction {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .result-prediction.danger {
+            color: var(--accent-danger);
+        }
+
+        .result-prediction.success {
+            color: var(--accent-success);
+        }
+
+        .probability-gauge {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .probability-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Risk Level Badges */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .risk-badge.critique {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .risk-badge.eleve {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .risk-badge.modere {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .risk-badge.faible {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Risk Factors */
+        .risk-factors {
+            margin-top: 1.5rem;
+        }
+
+        .risk-factor-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+        }
+
+        .risk-factor-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 68, 68, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .risk-factor-content {
+            flex: 1;
+        }
+
+        .risk-factor-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .risk-factor-value {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Recommendations */
+        .recommendations {
+            margin-top: 1.5rem;
+        }
+
+        .recommendations-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.05);
+            border-left: 3px solid var(--accent-success);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-icon {
+            color: var(--accent-success);
+            font-size: 1.25rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-primary);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* Results Table */
+        .results-table-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--bg-dark);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-success); }
+        .toast.error { border-left: 4px solid var(--accent-danger); }
+        .toast.warning { border-left: 4px solid var(--accent-warning); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">🎯</div>
+            <h1>Prédiction d'Attrition RH</h1>
+            <p class="subtitle">Anticipez les départs et retenez vos talents</p>
+            
+            {% if model_loaded %}
+            <div class="status-badge success">
+                <span class="status-dot"></span>
+                Modèle chargé - {{ model_info.get('model_name', 'ML Model') }}
+            </div>
+            {% else %}
+            <div class="status-badge warning">
+                <span class="status-dot"></span>
+                Modèle non chargé - Vérifiez la configuration
+            </div>
+            {% endif %}
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('single')">
+                <span>👤</span> Employé unique
+            </button>
+            <button class="tab-btn" onclick="switchTab('csv')">
+                <span>📊</span> Import CSV
+            </button>
+            <button class="tab-btn" onclick="switchTab('dashboard')">
+                <span>📈</span> Tableau de bord
+            </button>
+        </div>
+
+        <!-- Tab: Single Employee -->
+        <div id="tab-single" class="tab-content active">
+            <form id="employee-form">
+                <!-- Informations générales -->
+                <div class="card">
+                    <h3 class="card-title"><span>📋</span> Informations générales</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="Department">Département *</label>
+                            <select id="Department" name="Department" required>
+                                {% for dept in categorical_options.Department %}
+                                <option value="{{ dept }}">{{ dept }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="JobRole">Poste *</label>
+                            <select id="JobRole" name="JobRole" required>
+                                {% for role in categorical_options.JobRole %}
+                                <option value="{{ role }}">{{ role }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="JobLevel">Niveau hiérarchique (1-5) *</label>
+                            <input type="number" id="JobLevel" name="JobLevel" min="1" max="5" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="MaritalStatus">Statut marital</label>
+                            <select id="MaritalStatus" name="MaritalStatus">
+                                {% for status in categorical_options.MaritalStatus %}
+                                <option value="{{ status }}">{{ status }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="Education">Niveau d'éducation (1-5)</label>
+                            <input type="number" id="Education" name="Education" min="1" max="5" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="EducationField">Domaine d'études</label>
+                            <select id="EducationField" name="EducationField">
+                                {% for field in categorical_options.EducationField %}
+                                <option value="{{ field }}">{{ field }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rémunération et carrière -->
+                <div class="card">
+                    <h3 class="card-title"><span>💰</span> Rémunération et carrière</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="MonthlyIncome">Salaire mensuel (€) *</label>
+                            <input type="number" id="MonthlyIncome" name="MonthlyIncome" min="0" value="5000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="PercentSalaryHike">Dernière augmentation (%)</label>
+                            <input type="number" id="PercentSalaryHike" name="PercentSalaryHike" min="0" max="100" value="15">
+                        </div>
+                        <div class="form-group">
+                            <label for="StockOptionLevel">Niveau stock options (0-3)</label>
+                            <input type="number" id="StockOptionLevel" name="StockOptionLevel" min="0" max="3" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="PerformanceRating">Note de performance (1-4)</label>
+                            <input type="number" id="PerformanceRating" name="PerformanceRating" min="1" max="4" value="3">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expérience -->
+                <div class="card">
+                    <h3 class="card-title"><span>📅</span> Expérience</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="TotalWorkingYears">Années d'expérience totales *</label>
+                            <input type="number" id="TotalWorkingYears" name="TotalWorkingYears" min="0" value="8" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="YearsAtCompany">Années dans l'entreprise *</label>
+                            <input type="number" id="YearsAtCompany" name="YearsAtCompany" min="0" value="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="YearsInCurrentRole">Années dans le poste actuel</label>
+                            <input type="number" id="YearsInCurrentRole" name="YearsInCurrentRole" min="0" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="YearsSinceLastPromotion">Années depuis dernière promotion</label>
+                            <input type="number" id="YearsSinceLastPromotion" name="YearsSinceLastPromotion" min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="YearsWithCurrManager">Années avec le manager actuel</label>
+                            <input type="number" id="YearsWithCurrManager" name="YearsWithCurrManager" min="0" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="NumCompaniesWorked">Entreprises précédentes</label>
+                            <input type="number" id="NumCompaniesWorked" name="NumCompaniesWorked" min="0" value="2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satisfaction et bien-être -->
+                <div class="card">
+                    <h3 class="card-title"><span>😊</span> Satisfaction et bien-être</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="JobSatisfaction">Satisfaction au travail</label>
+                            <input type="range" id="JobSatisfaction" name="JobSatisfaction" min="1" max="4" value="3" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="JobSatisfaction-value">3 / 4</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="EnvironmentSatisfaction">Satisfaction environnement</label>
+                            <input type="range" id="EnvironmentSatisfaction" name="EnvironmentSatisfaction" min="1" max="4" value="3" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="EnvironmentSatisfaction-value">3 / 4</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="WorkLifeBalance">Équilibre vie pro/perso</label>
+                            <input type="range" id="WorkLifeBalance" name="WorkLifeBalance" min="1" max="4" value="3" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="WorkLifeBalance-value">3 / 4</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="JobInvolvement">Implication au travail</label>
+                            <input type="range" id="JobInvolvement" name="JobInvolvement" min="1" max="4" value="3" oninput="updateRangeValue(this)">
+                            <div class="range-value" id="JobInvolvement-value">3 / 4</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conditions de travail -->
+                <div class="card">
+                    <h3 class="card-title"><span>🏢</span> Conditions de travail</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="BusinessTravel">Fréquence de déplacement</label>
+                            <select id="BusinessTravel" name="BusinessTravel">
+                                {% for travel in categorical_options.BusinessTravel %}
+                                <option value="{{ travel }}">{{ travel }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="DistanceFromHome">Distance domicile-travail (km)</label>
+                            <input type="number" id="DistanceFromHome" name="DistanceFromHome" min="0" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="TrainingTimesLastYear">Formations suivies (année)</label>
+                            <input type="number" id="TrainingTimesLastYear" name="TrainingTimesLastYear" min="0" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="Arrive_mean">Heure d'arrivée moyenne</label>
+                            <input type="number" id="Arrive_mean" name="Arrive_mean" min="5" max="12" step="0.5" value="9">
+                        </div>
+                        <div class="form-group">
+                            <label for="Worktime_mean">Heures de travail/jour</label>
+                            <input type="number" id="Worktime_mean" name="Worktime_mean" min="4" max="16" step="0.5" value="8.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <span>🔮</span> Prédire l'attrition
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="fillSampleData()">
+                        <span>📝</span> Exemple de données
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <span>🔄</span> Réinitialiser
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading -->
+            <div class="loading" id="single-loading">
+                <div class="spinner"></div>
+                <p>Analyse en cours...</p>
+            </div>
+
+            <!-- Single Result -->
+            <div id="single-result" class="results-section" style="display: none;"></div>
+        </div>
+
+        <!-- Tab: CSV Import -->
+        <div id="tab-csv" class="tab-content">
+            <div class="card">
+                <h3 class="card-title"><span>📁</span> Import de fichier CSV</h3>
+                
+                <div class="file-upload" id="dropzone" onclick="document.getElementById('file-input').click()">
+                    <div class="file-upload-icon">📄</div>
+                    <p class="file-upload-text">Glissez-déposez votre fichier CSV ici</p>
+                    <p class="file-upload-hint">ou cliquez pour sélectionner un fichier</p>
+                    <input type="file" id="file-input" accept=".csv" onchange="handleFileSelect(this.files[0])">
+                </div>
+
+                <div id="file-info" style="margin-top: 1rem; display: none;">
+                    <p><strong>Fichier sélectionné:</strong> <span id="file-name"></span></p>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" id="csv-submit" onclick="submitCSV()" disabled>
+                        <span>🚀</span> Analyser le fichier
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadTemplate()">
+                        <span>📥</span> Télécharger template CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="csv-loading">
+                <div class="spinner"></div>
+                <p>Analyse des employés en cours...</p>
+            </div>
+
+            <!-- CSV Results -->
+            <div id="csv-results" class="results-section" style="display: none;"></div>
+        </div>
+
+        <!-- Tab: Dashboard -->
+        <div id="tab-dashboard" class="tab-content">
+            <div class="card">
+                <h3 class="card-title"><span>📊</span> Tableau de bord analytique</h3>
+                <p style="color: var(--text-secondary);">
+                    Importez un fichier CSV pour visualiser les statistiques d'attrition de votre entreprise.
+                </p>
+            </div>
+
+            <div id="dashboard-content" style="display: none;">
+                <!-- Stats will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // ============================================================
+        // UTILITIES
+        // ============================================================
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        function updateRangeValue(input) {
+            document.getElementById(`${input.id}-value`).textContent = `${input.value} / 4`;
+        }
+
+        // Initialize range values
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            updateRangeValue(input);
+        });
+
+        // ============================================================
+        // TAB NAVIGATION
+        // ============================================================
+        
+        function switchTab(tabId) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        // ============================================================
+        // SINGLE EMPLOYEE PREDICTION
+        // ============================================================
+        
+        document.getElementById('employee-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert numeric fields
+            const numericFields = [
+                'JobLevel', 'Education', 'MonthlyIncome', 'PercentSalaryHike', 
+                'StockOptionLevel', 'PerformanceRating', 'TotalWorkingYears', 
+                'YearsAtCompany', 'YearsInCurrentRole', 'YearsSinceLastPromotion',
+                'YearsWithCurrManager', 'NumCompaniesWorked', 'JobSatisfaction',
+                'EnvironmentSatisfaction', 'WorkLifeBalance', 'JobInvolvement',
+                'DistanceFromHome', 'TrainingTimesLastYear', 'Arrive_mean', 'Worktime_mean'
+            ];
+            
+            numericFields.forEach(field => {
+                if (data[field]) {
+                    data[field] = parseFloat(data[field]);
+                }
+            });
+            
+            // Show loading
+            document.getElementById('single-loading').classList.add('active');
+            document.getElementById('single-result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/predict/single', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                displaySingleResult(result);
+                
+            } catch (error) {
+                showToast('Erreur lors de la prédiction: ' + error.message, 'error');
+            } finally {
+                document.getElementById('single-loading').classList.remove('active');
+            }
+        });
+
+        function displaySingleResult(result) {
+            const container = document.getElementById('single-result');
+            const isDanger = result.prediction === 'DÉPART PROBABLE';
+            
+            let riskFactorsHTML = '';
+            if (result.risk_factors && result.risk_factors.length > 0) {
+                riskFactorsHTML = `
+                    <div class="risk-factors">
+                        <h4 style="margin-bottom: 1rem;">⚠️ Facteurs de risque identifiés</h4>
+                        ${result.risk_factors.map(rf => `
+                            <div class="risk-factor-item">
+                                <div class="risk-factor-icon">⚡</div>
+                                <div class="risk-factor-content">
+                                    <div class="risk-factor-title">${rf.message}</div>
+                                    <div class="risk-factor-value">${rf.factor}: ${rf.value} (seuil: ${rf.threshold})</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            let recommendationsHTML = '';
+            if (result.recommendations && result.recommendations.length > 0) {
+                recommendationsHTML = `
+                    <div class="recommendations">
+                        <h4 class="recommendations-title">💡 Recommandations pour améliorer la rétention</h4>
+                        ${result.recommendations.map(rec => `
+                            <div class="recommendation-item">
+                                <span class="recommendation-icon">✓</span>
+                                <span>${rec}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <div>
+                            <div class="result-prediction ${isDanger ? 'danger' : 'success'}">
+                                ${isDanger ? '🚨' : '✅'} ${result.prediction}
+                            </div>
+                            <div class="risk-badge ${result.risk_level.toLowerCase().replace('é', 'e')}">
+                                Risque ${result.risk_level}
+                            </div>
+                        </div>
+                        <div class="probability-gauge">
+                            <canvas id="probability-chart" width="120" height="120"></canvas>
+                            <div class="probability-value" style="color: ${isDanger ? 'var(--accent-danger)' : 'var(--accent-success)'}">
+                                ${result.probability}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${riskFactorsHTML}
+                    ${recommendationsHTML}
+                </div>
+            `;
+            
+            container.style.display = 'block';
+            
+            // Draw probability gauge
+            const ctx = document.getElementById('probability-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [result.probability, 100 - result.probability],
+                        backgroundColor: [
+                            isDanger ? '#ef4444' : '#10b981',
+                            '#2a2a3a'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+            
+            showToast('Analyse terminée !', 'success');
+        }
+
+        async function fillSampleData() {
+            try {
+                const response = await fetch('/api/sample-data');
+                const data = await response.json();
+                
+                Object.keys(data).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = data[key];
+                        if (input.type === 'range') {
+                            updateRangeValue(input);
+                        }
+                    }
+                });
+                
+                showToast('Données exemple chargées', 'success');
+            } catch (error) {
+                showToast('Erreur: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // CSV FILE HANDLING
+        // ============================================================
+        
+        let selectedFile = null;
+
+        const dropzone = document.getElementById('dropzone');
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('drag-over');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file || !file.name.endsWith('.csv')) {
+                showToast('Veuillez sélectionner un fichier CSV', 'error');
+                return;
+            }
+            
+            selectedFile = file;
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-info').style.display = 'block';
+            document.getElementById('csv-submit').disabled = false;
+            
+            showToast(`Fichier "${file.name}" sélectionné`, 'success');
+        }
+
+        async function submitCSV() {
+            if (!selectedFile) {
+                showToast('Veuillez sélectionner un fichier', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            document.getElementById('csv-loading').classList.add('active');
+            document.getElementById('csv-results').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/predict/csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Erreur serveur');
+                }
+                
+                const data = await response.json();
+                displayCSVResults(data);
+                updateDashboard(data);
+                
+            } catch (error) {
+                showToast('Erreur: ' + error.message, 'error');
+            } finally {
+                document.getElementById('csv-loading').classList.remove('active');
+            }
+        }
+
+        function displayCSVResults(data) {
+            const container = document.getElementById('csv-results');
+            const stats = data.statistics;
+            
+            let tableRows = data.results.map((r, idx) => `
+                <tr>
+                    <td>${r.employee_id}</td>
+                    <td><span class="risk-badge ${r.prediction === 'DÉPART PROBABLE' ? 'critique' : 'faible'}">${r.prediction}</span></td>
+                    <td>${r.probability}%</td>
+                    <td><span class="risk-badge ${r.risk_level.toLowerCase().replace('é', 'e')}">${r.risk_level}</span></td>
+                    <td>${r.risk_factors.length > 0 ? r.risk_factors.map(rf => rf.message).join(', ') : '-'}</td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value">${stats.total}</div>
+                        <div class="stat-label">Employés analysés</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🚨</div>
+                        <div class="stat-value" style="color: var(--accent-danger)">${stats.at_risk}</div>
+                        <div class="stat-label">À risque de départ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" style="color: var(--accent-success)">${stats.safe}</div>
+                        <div class="stat-label">Stables</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value">${stats.avg_probability}%</div>
+                        <div class="stat-label">Probabilité moyenne</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title"><span>📋</span> Résultats détaillés</h3>
+                    <div class="results-table-container">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Employé</th>
+                                    <th>Prédiction</th>
+                                    <th>Probabilité</th>
+                                    <th>Niveau de risque</th>
+                                    <th>Facteurs de risque</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            container.style.display = 'block';
+            showToast(`${stats.total} employés analysés !`, 'success');
+        }
+
+        function updateDashboard(data) {
+            const container = document.getElementById('dashboard-content');
+            const stats = data.statistics;
+            const deptStats = data.department_stats;
+            
+            // Prepare department data for chart
+            const deptLabels = Object.keys(deptStats);
+            const deptAtRisk = deptLabels.map(d => deptStats[d].at_risk);
+            const deptTotal = deptLabels.map(d => deptStats[d].total);
+            const deptRates = deptLabels.map(d => ((deptStats[d].at_risk / deptStats[d].total) * 100).toFixed(1));
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value">${stats.total}</div>
+                        <div class="stat-label">Total employés</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value" style="color: var(--accent-danger)">${stats.high_risk_count}</div>
+                        <div class="stat-label">Risque élevé/critique</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value">${((stats.at_risk / stats.total) * 100).toFixed(1)}%</div>
+                        <div class="stat-label">Taux d'attrition prédit</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value">${stats.avg_probability}%</div>
+                        <div class="stat-label">Probabilité moyenne</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Distribution des prédictions</div>
+                        <canvas id="prediction-pie-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Risque par département</div>
+                        <canvas id="dept-bar-chart"></canvas>
+                    </div>
+                </div>
+
+                ${deptLabels.length > 0 ? `
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h3 class="card-title"><span>🏢</span> Statistiques par département</h3>
+                    <div class="results-table-container">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Département</th>
+                                    <th>Total</th>
+                                    <th>À risque</th>
+                                    <th>Taux d'attrition</th>
+                                    <th>Probabilité moy.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${deptLabels.map(dept => `
+                                    <tr>
+                                        <td><strong>${dept}</strong></td>
+                                        <td>${deptStats[dept].total}</td>
+                                        <td style="color: var(--accent-danger)">${deptStats[dept].at_risk}</td>
+                                        <td>${((deptStats[dept].at_risk / deptStats[dept].total) * 100).toFixed(1)}%</td>
+                                        <td>${deptStats[dept].avg_probability}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            container.style.display = 'block';
+            
+            // Pie Chart
+            new Chart(document.getElementById('prediction-pie-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Départ probable', 'Reste probable'],
+                    datasets: [{
+                        data: [stats.at_risk, stats.safe],
+                        backgroundColor: ['#ef4444', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#f1f5f9', padding: 20 }
+                        }
+                    }
+                }
+            });
+            
+            // Bar Chart
+            if (deptLabels.length > 0) {
+                new Chart(document.getElementById('dept-bar-chart'), {
+                    type: 'bar',
+                    data: {
+                        labels: deptLabels,
+                        datasets: [
+                            {
+                                label: 'À risque',
+                                data: deptAtRisk,
+                                backgroundColor: '#ef4444'
+                            },
+                            {
+                                label: 'Stables',
+                                data: deptLabels.map((d, i) => deptTotal[i] - deptAtRisk[i]),
+                                backgroundColor: '#10b981'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#2a2a3a' }
+                            },
+                            y: {
+                                stacked: true,
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#2a2a3a' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#f1f5f9' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function downloadTemplate() {
+            const headers = [
+                'EmployeeID', 'BusinessTravel', 'Department', 'DistanceFromHome',
+                'Education', 'EducationField', 'EnvironmentSatisfaction', 
+                'JobInvolvement', 'JobLevel', 'JobRole', 'JobSatisfaction',
+                'MaritalStatus', 'MonthlyIncome', 'NumCompaniesWorked',
+                'PercentSalaryHike', 'PerformanceRating', 'StockOptionLevel',
+                'TotalWorkingYears', 'TrainingTimesLastYear', 'WorkLifeBalance',
+                'YearsAtCompany', 'YearsInCurrentRole', 'YearsSinceLastPromotion',
+                'YearsWithCurrManager', 'Arrive_mean', 'Worktime_mean'
+            ];
+            
+            const sampleRow = [
+                '1', 'Travel_Rarely', 'Research & Development', '10',
+                '3', 'Life Sciences', '3', '3', '2', 'Research Scientist', '3',
+                'Married', '5000', '2', '15', '3', '1', '8', '3', '3',
+                '5', '3', '1', '3', '9.0', '8.5'
+            ];
+            
+            const csvContent = headers.join(',') + '\n' + sampleRow.join(',');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'template_attrition.csv';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            showToast('Template téléchargé !', 'success');
+        }
+    </script>
+</body>
+</html>
