@@ -3,3 +3,4 @@ pathlib
 matplotlib
 seaborn
 scikit-learn
+imbalanced-learn

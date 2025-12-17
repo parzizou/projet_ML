@@ -50,10 +50,11 @@ model = None
 preprocessor = None
 metadata = None
 imputation_values = None  # Valeurs pour l'imputation (médianes/modes)
+optimal_threshold = 0.5  # Seuil de décision par défaut
 
 def load_models():
     """Charge le modèle, le preprocessor et les métadonnées."""
-    global model, preprocessor, metadata, imputation_values
+    global model, preprocessor, metadata, imputation_values, optimal_threshold
     
     try:
         if os.path.exists(MODEL_PATH):
@@ -79,6 +80,14 @@ def load_models():
             else:
                 print(f"⚠️ Pas de valeurs d'imputation dans les métadonnées, utilisation de valeurs par défaut")
                 imputation_values = None
+                
+            # Charger le seuil optimal si disponible
+            if isinstance(metadata, dict) and 'optimal_threshold' in metadata:
+                optimal_threshold = metadata['optimal_threshold']
+                print(f"✅ Seuil optimal chargé: {optimal_threshold:.3f}")
+            else:
+                optimal_threshold = 0.5
+                print(f"⚠️ Pas de seuil optimal dans les métadonnées, utilisation de 0.5")
         else:
             print(f"⚠️ Métadonnées non trouvées: {METADATA_PATH}")
             
@@ -440,13 +449,14 @@ def predict_single(data: dict) -> dict:
         # Transformer avec le preprocessor
         X_processed = preprocessor.transform(df)
         
-        # Prédiction
-        prediction = model.predict(X_processed)[0]
-        
         # Probabilité (si disponible)
         if hasattr(model, 'predict_proba'):
             proba = model.predict_proba(X_processed)[0][1]
+            # Utiliser le seuil optimal pour la prédiction
+            prediction = 1 if proba >= optimal_threshold else 0
         else:
+            # Fallback si pas de predict_proba
+            prediction = model.predict(X_processed)[0]
             proba = float(prediction)
         
         # Analyser les facteurs de risque
