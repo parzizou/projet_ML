@@ -13,6 +13,7 @@ Application web FastAPI pour prédire l'attrition des employés et aider les RH 
 - ✅ **Tableau de bord** : Visualisations et statistiques par département
 - ✅ **Facteurs de risque** : Identification automatique des points faibles
 - ✅ **Recommandations** : Conseils personnalisés pour améliorer la rétention
+- 🆕 **SMOTE** : Gestion du déséquilibre des classes avec SMOTE (Synthetic Minority Over-sampling Technique)
 
 ## 🚀 Installation
 
@@ -137,6 +138,8 @@ Pour l'import CSV, utilisez le format suivant (téléchargeable depuis l'interfa
 | `/api/options` | GET | Options des champs catégoriels |
 | `/api/sample-data` | GET | Données d'exemple |
 | `/api/reload-model` | POST | Recharger le modèle |
+| `/api/smote/config` | GET | Obtenir la configuration SMOTE actuelle |
+| `/api/smote/apply` | POST | Configurer et appliquer SMOTE |
 
 ### Exemple d'appel API
 
@@ -205,6 +208,7 @@ curl -X POST "http://localhost:8000/api/predict/single" \
 ```
 attrition-app/
 ├── app.py                 # Application FastAPI principale
+├── smote_handler.py       # Module de gestion SMOTE
 ├── requirements.txt       # Dépendances Python
 ├── README.md             # Ce fichier
 ├── models/               # Fichiers de modèle ML
@@ -235,6 +239,104 @@ L'application identifie automatiquement les points faibles :
 - **Carrière** : Temps depuis dernière promotion, niveau de rémunération
 - **Conditions** : Distance domicile, heures de travail excessives
 - **Développement** : Manque de formations, pas de stock options
+
+## 🔄 SMOTE - Gestion du déséquilibre des classes
+
+### Qu'est-ce que SMOTE ?
+
+SMOTE (Synthetic Minority Over-sampling Technique) est une technique de rééchantillonnage utilisée pour gérer le déséquilibre des classes dans les données d'entraînement. Elle génère des échantillons synthétiques de la classe minoritaire pour équilibrer les données.
+
+### Intégration dans le projet
+
+SMOTE est intégré dans le pipeline de machine learning et doit être appliqué **uniquement pendant l'entraînement du modèle**, jamais pendant l'inférence (prédiction).
+
+### Configuration SMOTE via l'interface web
+
+L'interface web propose une section "Configuration SMOTE" qui permet de :
+- ✅ Activer/désactiver SMOTE pour le réentraînement
+- ⚙️ Configurer le nombre de voisins (k_neighbors: 1-10)
+- 📊 Choisir la stratégie de rééchantillonnage (auto, minority, all, etc.)
+- 📈 Visualiser les statistiques avant/après l'application de SMOTE
+
+### Configuration via l'API
+
+```bash
+# Configurer SMOTE
+curl -X POST "http://localhost:8000/api/smote/apply" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "enabled": true,
+       "sampling_strategy": "auto",
+       "k_neighbors": 5,
+       "random_state": 42
+     }'
+
+# Obtenir la configuration actuelle
+curl -X GET "http://localhost:8000/api/smote/config"
+```
+
+### Utilisation dans le code Python
+
+```python
+from smote_handler import SMOTEHandler, SMOTEConfig, apply_smote
+
+# Méthode 1: Utilisation de la fonction utilitaire
+X_resampled, y_resampled, stats = apply_smote(
+    X_train, 
+    y_train,
+    sampling_strategy='auto',
+    k_neighbors=5,
+    random_state=42
+)
+
+# Méthode 2: Utilisation de la classe SMOTEHandler
+config = SMOTEConfig(
+    sampling_strategy='auto',
+    k_neighbors=5,
+    random_state=42
+)
+handler = SMOTEHandler(config)
+X_resampled, y_resampled = handler.fit_resample(X_train, y_train)
+statistics = handler.get_statistics()
+
+# Les statistiques incluent :
+# - Distribution avant SMOTE
+# - Distribution après SMOTE
+# - Nombre d'échantillons synthétiques créés
+print(statistics)
+```
+
+### Paramètres SMOTE
+
+| Paramètre | Description | Valeurs | Par défaut |
+|-----------|-------------|---------|------------|
+| `sampling_strategy` | Stratégie de rééchantillonnage | 'auto', 'minority', 'not minority', 'all', float, dict | 'auto' |
+| `k_neighbors` | Nombre de voisins pour générer des échantillons | 1-10 (entier) | 5 |
+| `random_state` | Seed pour la reproductibilité | entier | 42 |
+
+### Exemple de sortie des logs SMOTE
+
+```
+============================================================
+Application de SMOTE pour rééquilibrer les classes
+============================================================
+Configuration SMOTE: {'sampling_strategy': 'auto', 'k_neighbors': 5, 'random_state': 42}
+Distribution AVANT SMOTE: {0: 3850, 1: 630}
+Distribution APRÈS SMOTE: {0: 3850, 1: 3850}
+Nombre d'échantillons AVANT: 4480
+Nombre d'échantillons APRÈS: 7700
+Échantillons synthétiques créés: 3220
+============================================================
+```
+
+### Bonnes pratiques
+
+- ✅ **Appliquer SMOTE uniquement sur l'ensemble d'entraînement**
+- ✅ **Appliquer SMOTE après le split train/test**
+- ✅ **Appliquer SMOTE avant le preprocessing (si nécessaire)**
+- ✅ **Valider les performances sur des données de test non modifiées**
+- ❌ **Ne jamais appliquer SMOTE sur les données de test/validation**
+- ❌ **Ne pas appliquer SMOTE pendant l'inférence**
 
 ## 🤝 Contribution
 

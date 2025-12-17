@@ -17,6 +17,17 @@ import json
 import io
 from datetime import datetime
 import os
+import logging
+
+# Importer le gestionnaire SMOTE
+from smote_handler import SMOTEHandler, SMOTEConfig, apply_smote
+
+# Configuration du logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # CONFIGURATION
@@ -50,6 +61,7 @@ model = None
 preprocessor = None
 metadata = None
 imputation_values = None  # Valeurs pour l'imputation (médianes/modes)
+smote_handler = None  # Gestionnaire SMOTE global
 
 def load_models():
     """Charge le modèle, le preprocessor et les métadonnées."""
@@ -137,6 +149,13 @@ class PredictionResponse(BaseModel):
     missing_fields_count: int
     total_fields: int
     risk_factors: List[Dict[str, Any]]
+
+class SMOTEConfigRequest(BaseModel):
+    """Schéma pour la configuration SMOTE."""
+    enabled: bool = Field(False, description="Activer ou désactiver SMOTE")
+    sampling_strategy: str = Field('auto', description="Stratégie de rééchantillonnage")
+    k_neighbors: int = Field(5, ge=1, le=10, description="Nombre de voisins (1-10)")
+    random_state: int = Field(42, description="Seed pour la reproductibilité")
 
 # ============================================================================
 # CONSTANTES ET VALEURS PAR DÉFAUT
@@ -608,6 +627,60 @@ async def reload_model():
         "status": "reloaded",
         "model_loaded": model is not None,
         "preprocessor_loaded": preprocessor is not None
+    }
+
+@app.get("/api/smote/config")
+async def get_smote_config():
+    """Retourne la configuration SMOTE actuelle."""
+    if smote_handler is not None:
+        stats = smote_handler.get_statistics()
+        return {
+            "enabled": True,
+            "config": smote_handler.config.to_dict(),
+            "statistics": stats
+        }
+    else:
+        return {
+            "enabled": False,
+            "config": {
+                "sampling_strategy": "auto",
+                "k_neighbors": 5,
+                "random_state": 42
+            },
+            "statistics": {"applied": False}
+        }
+
+@app.post("/api/smote/apply")
+async def apply_smote_endpoint(config: SMOTEConfigRequest):
+    """
+    Configure et applique SMOTE.
+    Note: Ceci est principalement pour la documentation et la démonstration.
+    SMOTE doit être appliqué pendant l'entraînement du modèle, pas pendant l'inférence.
+    """
+    global smote_handler
+    
+    if not config.enabled:
+        smote_handler = None
+        logger.info("SMOTE désactivé")
+        return {
+            "status": "disabled",
+            "message": "SMOTE a été désactivé"
+        }
+    
+    # Créer un nouveau handler avec la configuration fournie
+    smote_config = SMOTEConfig(
+        sampling_strategy=config.sampling_strategy,
+        k_neighbors=config.k_neighbors,
+        random_state=config.random_state
+    )
+    smote_handler = SMOTEHandler(smote_config)
+    
+    logger.info(f"SMOTE configuré avec: {smote_config.to_dict()}")
+    
+    return {
+        "status": "configured",
+        "message": "SMOTE a été configuré. Appliquez-le pendant l'entraînement du modèle.",
+        "config": smote_config.to_dict()
     }
 
 # ============================================================================
