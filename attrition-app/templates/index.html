@@ -898,6 +898,53 @@
                     </div>
                 </div>
 
+                <!-- Configuration SMOTE (informative - appliqué durant l'entraînement) -->
+                <div class="card" style="border: 2px solid var(--accent-primary); background: rgba(99, 102, 241, 0.05);">
+                    <h3 class="card-title"><span>🔄</span> Configuration SMOTE</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                        ℹ️ SMOTE (Synthetic Minority Over-sampling Technique) est utilisé pendant l'entraînement du modèle pour équilibrer les classes.
+                        Les paramètres ci-dessous sont informatifs et configurables via l'API pour le réentraînement du modèle.
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="smote_enabled" name="smote_enabled" style="width: auto; height: auto;">
+                                <span>Activer SMOTE (entraînement)</span>
+                            </label>
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">
+                                Active le rééquilibrage des classes lors du réentraînement
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="smote_k_neighbors">Nombre de voisins (1-10)</label>
+                            <input type="number" id="smote_k_neighbors" name="smote_k_neighbors" min="1" max="10" value="5" placeholder="5">
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">
+                                Nombre de voisins pour générer des échantillons synthétiques
+                            </small>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="smote_strategy">Stratégie de rééchantillonnage</label>
+                            <select id="smote_strategy" name="smote_strategy">
+                                <option value="auto" selected>Auto (équilibre automatique)</option>
+                                <option value="minority">Minority (classe minoritaire uniquement)</option>
+                                <option value="not minority">Not minority (toutes sauf majoritaire)</option>
+                                <option value="all">All (toutes les classes)</option>
+                            </select>
+                            <small style="color: var(--text-muted); font-size: 0.8rem;">
+                                Définit quelles classes seront rééchantillonnées
+                            </small>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 0.5rem;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            <strong>📊 Statistiques SMOTE:</strong> Les statistiques d'application de SMOTE seront affichées ici après le réentraînement du modèle.
+                        </p>
+                        <div id="smote-stats" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            Aucune statistique disponible
+                        </div>
+                    </div>
+                </div>
+
                 <div class="btn-group">
                     <button type="submit" class="btn btn-primary">
                         <span>🔮</span> Prédire l'attrition
@@ -1507,6 +1554,79 @@
             URL.revokeObjectURL(url);
             showToast('Template téléchargé !', 'success');
         }
+
+        // ============================================================
+        // SMOTE CONFIGURATION
+        // ============================================================
+        
+        async function loadSMOTEConfig() {
+            try {
+                const response = await fetch('/api/smote/config');
+                const config = await response.json();
+                
+                if (config.statistics && config.statistics.applied) {
+                    const stats = config.statistics;
+                    let statsHTML = `
+                        <strong>✅ SMOTE appliqué lors du dernier entraînement</strong><br>
+                        📊 Avant: ${JSON.stringify(stats.before)}<br>
+                        📊 Après: ${JSON.stringify(stats.after)}<br>
+                        ➕ Échantillons synthétiques: ${stats.synthetic_samples}<br>
+                        ⚙️ k_neighbors: ${stats.config.k_neighbors}<br>
+                        ⚙️ Stratégie: ${stats.config.sampling_strategy}
+                    `;
+                    document.getElementById('smote-stats').innerHTML = statsHTML;
+                } else {
+                    document.getElementById('smote-stats').textContent = 'Aucune statistique disponible';
+                }
+                
+                // Update form values if config exists
+                if (config.config) {
+                    document.getElementById('smote_enabled').checked = config.enabled || false;
+                    document.getElementById('smote_k_neighbors').value = config.config.k_neighbors || 5;
+                    document.getElementById('smote_strategy').value = config.config.sampling_strategy || 'auto';
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement de la configuration SMOTE:', error);
+            }
+        }
+        
+        async function saveSMOTEConfig() {
+            const config = {
+                enabled: document.getElementById('smote_enabled').checked,
+                sampling_strategy: document.getElementById('smote_strategy').value,
+                k_neighbors: parseInt(document.getElementById('smote_k_neighbors').value),
+                random_state: 42
+            };
+            
+            try {
+                const response = await fetch('/api/smote/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                showToast(result.message, 'success');
+                
+                // Reload configuration to update stats
+                await loadSMOTEConfig();
+            } catch (error) {
+                showToast('Erreur lors de la sauvegarde de la configuration SMOTE', 'error');
+                console.error(error);
+            }
+        }
+        
+        // Add event listener for SMOTE configuration changes
+        document.getElementById('smote_enabled').addEventListener('change', saveSMOTEConfig);
+        document.getElementById('smote_k_neighbors').addEventListener('change', saveSMOTEConfig);
+        document.getElementById('smote_strategy').addEventListener('change', saveSMOTEConfig);
+        
+        // Load SMOTE config on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSMOTEConfig();
+        });
     </script>
 </body>
 </html>
