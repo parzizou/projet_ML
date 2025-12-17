@@ -171,10 +171,3 @@ def apply_smote(
     statistics = handler.get_statistics()
     
     return X_resampled, y_resampled, statistics
-
-
-# Configuration par défaut pour le logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)

@@ -3,4 +3,4 @@ pathlib
 matplotlib
 seaborn
 scikit-learn
-imbalanced-learn
+imbalanced-learn>=0.11.0,<0.13.0
