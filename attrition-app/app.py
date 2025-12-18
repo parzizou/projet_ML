@@ -425,7 +425,7 @@ def get_confidence_level(missing_count: int, total_count: int) -> tuple:
         return ('Faible confiance', f'Attention : {missing_percentage:.0f}% des champs sont manquants. La prédiction peut être moins précise.')
 
 def predict_single(data: dict) -> dict:
-    """Effectue une prédiction pour un seul employé."""
+    """Effectue une prédiction pour un seul employé avec seuil optimal."""
     if model is None or preprocessor is None:
         return {
             'error': 'Modèle non chargé. Vérifiez les chemins des fichiers.',
@@ -436,7 +436,8 @@ def predict_single(data: dict) -> dict:
             'confidence_message': 'Modèle non chargé',
             'missing_fields_count': 0,
             'total_fields': 0,
-            'risk_factors': []
+            'risk_factors': [],
+            'threshold_used': 0.5
         }
     
     try:
@@ -449,11 +450,12 @@ def predict_single(data: dict) -> dict:
         # Transformer avec le preprocessor
         X_processed = preprocessor.transform(df)
         
-        # Probabilité (si disponible)
+        # Probabilité et prédiction avec seuil optimal
         if hasattr(model, 'predict_proba'):
             proba = model.predict_proba(X_processed)[0][1]
-            # Utiliser le seuil optimal pour la prédiction
+            # ✅ Utiliser le seuil optimal pour la prédiction
             prediction = 1 if proba >= optimal_threshold else 0
+            print(f"🎯 Prédiction: proba={proba:.3f}, seuil={optimal_threshold:.3f}, résultat={'DÉPART' if prediction == 1 else 'RESTE'}")
         else:
             # Fallback si pas de predict_proba
             prediction = model.predict(X_processed)[0]
@@ -470,20 +472,25 @@ def predict_single(data: dict) -> dict:
             'confidence_message': confidence_message,
             'missing_fields_count': missing_count,
             'total_fields': total_count,
-            'risk_factors': risk_factors
+            'risk_factors': risk_factors,
+            'threshold_used': optimal_threshold  # ✅ NOUVEAU - Information sur le seuil utilisé
         }
         
     except Exception as e:
+        import traceback
+        print(f"❌ Erreur dans predict_single: {e}")
+        print(traceback.format_exc())
         return {
             'error': str(e),
             'prediction': 'ERREUR',
             'probability': 0.0,
             'risk_level': 'ERREUR',
             'confidence_level': 'Inconnu',
-            'confidence_message': 'Erreur lors du calcul',
+            'confidence_message': f'Erreur lors du calcul: {str(e)}',
             'missing_fields_count': 0,
             'total_fields': 0,
-            'risk_factors': []
+            'risk_factors': [],
+            'threshold_used': optimal_threshold
         }
 
 # ============================================================================
@@ -512,6 +519,34 @@ async def get_status():
         "metadata_loaded": metadata is not None,
         "model_info": metadata if metadata else {}
     }
+
+@app.get("/api/model-config")
+async def get_model_config():
+    """Retourne la configuration du modèle incluant le seuil optimal."""
+    config = {
+        "optimal_threshold": optimal_threshold,
+        "threshold_info": {
+            "value": optimal_threshold,
+            "description": "Seuil de décision optimisé pour maximiser le F2-score (priorité au recall)",
+            "optimized_for": "Detection maximale des départs (minimiser les faux négatifs)"
+        },
+        "model_loaded": model is not None,
+        "preprocessor_loaded": preprocessor is not None,
+        "metadata_loaded": metadata is not None
+    }
+    
+    # Ajouter les métriques si disponibles
+    if metadata and isinstance(metadata, dict):
+        if 'metrics' in metadata:
+            config['metrics'] = metadata['metrics']
+        if 'model_name' in metadata:
+            config['model_name'] = metadata['model_name']
+        if 'training_date' in metadata:
+            config['training_date'] = metadata['training_date']
+        if 'data_stats' in metadata:
+            config['data_stats'] = metadata['data_stats']
+    
+    return config
 
 @app.post("/api/predict/single")
 async def predict_employee(employee: EmployeeData):
@@ -547,7 +582,9 @@ async def predict_csv(file: UploadFile = File(...)):
             'at_risk': sum(1 for p in predictions if p == 'DÉPART PROBABLE'),
             'safe': sum(1 for p in predictions if p == 'RESTE PROBABLE'),
             'avg_probability': round(np.mean(probabilities), 1),
-            'high_risk_count': sum(1 for r in results if r['risk_level'] in ['CRITIQUE', 'ÉLEVÉ'])
+            'high_risk_count': sum(1 for r in results if r['risk_level'] in ['CRITIQUE', 'ÉLEVÉ']),
+            'threshold_used': optimal_threshold,  # ✅ NOUVEAU
+            'threshold_info': f"Seuil optimal: {optimal_threshold:.3f} (optimisé pour maximiser la détection)"  # ✅ NOUVEAU
         }
         
         # Distribution par département si disponible
